@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shopify → Odoo showreel</title>
+<style>
+  @font-face { font-family: 'SG'; font-weight: 500; src: url('node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'SG'; font-weight: 600; src: url('node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'SG'; font-weight: 700; src: url('node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'JBM'; font-weight: 500; src: url('node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'JBM'; font-weight: 600; src: url('node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'JBM'; font-weight: 700; src: url('node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-700-normal.woff2') format('woff2'); }
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="lib.js"></script>
+<script src="scenes.js"></script>
+<script>
+(async () => {
+  window.DEBUG = new URLSearchParams(location.search).has('debug');
+  const faces = ['500 40px SG', '600 40px SG', '700 40px SG', '500 20px JBM', '600 20px JBM', '700 20px JBM'];
+  await Promise.all(faces.map(f => document.fonts.load(f, 'Shopify Odoo #1001 ×…—')));
+  await document.fonts.ready;
+
+  const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+  const main = document.getElementById('c');
+  const mctx = main.getContext('2d', { alpha: false });
+  const acc = mk(), actx = acc.getContext('2d', { alpha: false });
+  const tmp = mk(), tctx = tmp.getContext('2d', { alpha: false });
+
+  // Motion blur: average `samples` sub-frames spread across `shutter` frames (1 = 360°).
+  window.renderAt = (t, samples = 1, shutter = 1) => {
+    if (samples <= 1) { drawFrame(mctx, t); return; }
+    for (let s = 0; s < samples; s++) {
+      const ts = t + ((s + 0.5) / samples - 0.5) * shutter / FPS;
+      tctx.setTransform(1, 0, 0, 1, 0, 0);
+      tctx.globalAlpha = 1;
+      drawFrame(tctx, ts);
+      actx.globalAlpha = 1 / (s + 1);
+      actx.drawImage(tmp, 0, 0);
+    }
+    mctx.globalAlpha = 1;
+    mctx.drawImage(acc, 0, 0);
+  };
+
+  // live preview when opened in a browser without the renderer
+  if (new URLSearchParams(location.search).has('play')) {
+    const t0 = performance.now();
+    const loop = now => { drawFrame(mctx, ((now - t0) / 1000) % DUR); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+  window.__ready = true;
+})();
+</script>
+</body>
+</html>
