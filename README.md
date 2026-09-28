@@ -1,11 +1,14 @@
 # Shopify → Odoo Order Connector
 
-<p align="center">
-  <img src="media/showreel.gif" width="100%" alt="15-second animated explainer: the script fetches orders from Shopify, skips an order that is already in Odoo, finds or creates the customer, matches products by SKU and creates a draft quotation in Odoo for a person to confirm.">
-</p>
-<p align="center">
-  <sub>▶ <a href="media/showreel.mp4">Watch in 1080p60 with sound (MP4)</a> · <a href="media/showreel-src">animated entirely in code</a></sub>
-</p>
+<a href="https://mateuszkrw-coder.github.io/shopify-odoo-connector/showreel.mp4">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="media/showreel.png">
+    <img src="media/showreel.avif" width="100%" alt="15-second showreel: the script fetches orders from Shopify, skips an order that is already in Odoo, finds or creates the customer, matches products by SKU and creates a draft quotation in Odoo for a person to confirm.">
+  </picture>
+</a>
+
+<sub>▶ [Watch the showreel in HD with sound](https://mateuszkrw-coder.github.io/shopify-odoo-connector/showreel.mp4)
+(15 seconds, animated in code: [how it's made](media/showreel-src/))</sub>
 
 A small Python integration that imports orders from a Shopify store into Odoo as sales quotations. Built as a portfolio project to demonstrate Odoo external-API integration.
 

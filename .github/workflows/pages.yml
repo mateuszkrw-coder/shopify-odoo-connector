@@ -1,0 +1,47 @@
+# Publishes the showreel on GitHub Pages. The README's showreel links here:
+# GitHub's file view only downloads an MP4, while Pages serves it as video,
+# so it plays in the browser with sound.
+#
+# One-time setup: Settings > Pages > Build and deployment > Source: GitHub Actions.
+name: Showreel on Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["media/showreel.mp4", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Put the showreel on the site
+        run: |
+          mkdir -p site
+          cp media/showreel.mp4 site/showreel.mp4
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

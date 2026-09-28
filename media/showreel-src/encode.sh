@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Turns the rendered frames (node render.mjs --out=frames) into the README GIF
-# and the HD MP4 with its soundtrack. Needs ffmpeg (or FFMPEG=/path/to/ffmpeg),
-# plus numpy and scipy for the soundtrack.
+# Turns the rendered frames (node render.mjs --out=frames) into the HD MP4 with
+# its soundtrack, the looping AVIF for the README and a still. Needs ffmpeg with
+# libx264 and an AV1 encoder (or FFMPEG=/path/to/ffmpeg), plus numpy and scipy
+# for the soundtrack.
 set -euo pipefail
 cd "$(dirname "$0")"
 FFMPEG=${FFMPEG:-ffmpeg}
@@ -24,13 +25,21 @@ val() { printf '%s' "$stats" | python3 -c "import json, sys; print(json.load(sys
   -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
   -c:a aac -b:a 192k -ar 48000 -shortest -movflags +faststart "$OUT/showreel.mp4"
 
-# GIF: 960 px, 30 fps, one global palette + error-diffusion dither (keeps the
-# motion blur smooth), loops forever
+# Animated AVIF for the README: it autoplays and loops like a GIF, in full
+# colour and at a fraction of the size. SVT-AV1 when available, else libaom.
+if "$FFMPEG" -hide_banner -encoders 2>/dev/null | grep -q libsvtav1; then
+  av1=(-c:v libsvtav1 -preset 4 -crf "${AVIF_CRF:-30}" -g 450 -svtav1-params tune=0)
+else
+  av1=(-c:v libaom-av1 -crf "${AVIF_CRF:-24}" -b:v 0 -cpu-used 4 -row-mt 1 -tiles 2x2 -g 450)
+fi
 "$FFMPEG" -hide_banner -loglevel error -y -framerate 60 -i frames/f_%04d.png \
-  -vf "fps=30,scale=960:-1:flags=lanczos,palettegen=max_colors=256:stats_mode=full" palette.png
-"$FFMPEG" -hide_banner -loglevel error -y -framerate 60 -i frames/f_%04d.png -i palette.png \
-  -lavfi "fps=30,scale=960:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a:diff_mode=rectangle" \
-  -loop 0 "$OUT/showreel.gif"
+  -vf "fps=30,scale=1280:-2:flags=lanczos+accurate_rnd+full_chroma_int:out_color_matrix=bt709:out_range=tv,format=yuv420p" \
+  "${av1[@]}" -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv \
+  -loop 0 "$OUT/showreel.avif"
 
-rm -f soundtrack.wav soundtrack_norm.wav palette.png
-echo "wrote $OUT/showreel.mp4 and $OUT/showreel.gif"
+# Still for readers who prefer reduced motion: the end card
+"$FFMPEG" -hide_banner -loglevel error -y -i frames/f_0828.png \
+  -vf "scale=1280:-1:flags=lanczos" "$OUT/showreel.png"
+
+rm -f soundtrack.wav soundtrack_norm.wav
+echo "wrote $OUT/showreel.mp4, $OUT/showreel.avif and $OUT/showreel.png"
