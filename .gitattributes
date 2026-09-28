@@ -1,0 +1,3 @@
+# Keep the showreel's build scripts out of GitHub's language stats,
+# so the repo still reads as the Python project it is.
+media/showreel-src/** linguist-vendored
